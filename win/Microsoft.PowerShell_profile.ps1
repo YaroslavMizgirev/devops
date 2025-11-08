@@ -292,6 +292,17 @@ function credo { Set-Location "C:\Users\$env:USERNAME\Downloads\Credo" }
 function mymsoft { Set-Location "C:\Users\$env:USERNAME\Downloads\mymsoft" }
 function moek { Set-Location "C:\Users\$env:USERNAME\Downloads\moek" }
 
+# Перезапустить профиль
+function refresh {
+    try {
+        . $PROFILE
+        Write-Host "Профиль успешно перезагружен" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Ошибка при загрузке профиля: $_" -ForegroundColor Red
+    }
+}
+
 # Информация о системе
 function sysinfo {
     Write-Host "=== System Information ===" -ForegroundColor Cyan
