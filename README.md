@@ -52,6 +52,7 @@ if (!(Test-Path $PROFILE)) {
 [Microsoft.PowerShell_profile.ps1](win/Microsoft.PowerShell_profile.ps1):
 
 - функция 'Set-PowerShellTheme': Настройка внешнего вида
+![Пример](image/printing_command_in_cli_powershell.png)
 - установка alias'ов: 'which', 'open'
 - функции быстрой навигации:
     -  '..' - аналог 'cd ..',
