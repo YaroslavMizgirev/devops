@@ -319,6 +319,7 @@ function Show-Welcome {
     Write-Host "Profile loaded from: $PROFILE" -ForegroundColor Gray
     Write-Host "------------------------" -ForegroundColor Gray
     Write-Host "Type 'proj' for Projects" -ForegroundColor Gray
+    Write-Host "Type 'proj_java' for Java projects" -ForegroundColor Gray
     Write-Host "Type 'docs' for Documents" -ForegroundColor Gray
     Write-Host "Type 'downloads' for Downloads" -ForegroundColor Gray
     Write-Host "Type 'credo' for Credo" -ForegroundColor Gray
