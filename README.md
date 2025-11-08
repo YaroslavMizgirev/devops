@@ -48,7 +48,7 @@ if (!(Test-Path $PROFILE)) {
     New-Item -Path $PROFILE -Type File -Force
 }
 ```
-[Microsoft.PowerShell_profile.ps1]()
+[Microsoft.PowerShell_profile.ps1](win/Microsoft.PowerShell_profile.ps1)
 
 ### BASH
 
