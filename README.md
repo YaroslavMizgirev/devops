@@ -48,7 +48,28 @@ if (!(Test-Path $PROFILE)) {
     New-Item -Path $PROFILE -Type File -Force
 }
 ```
-[Microsoft.PowerShell_profile.ps1](win/Microsoft.PowerShell_profile.ps1)
+
+[Microsoft.PowerShell_profile.ps1](win/Microsoft.PowerShell_profile.ps1):
+
+- функция 'Set-PowerShellTheme': Настройка внешнего вида
+- установка alias'ов: 'which', 'open'
+- функции быстрой навигации:
+    -  '..' - аналог 'cd ..',
+    -  '...' - аналог 'cd ..\..',
+    -  '~' - аналог 'cd ~' Linux,
+    -  'proj' - goto Projects folder,
+    -  'proj_java' - goto Java projects folder,
+    -  'docs' - goto User Documents folder,
+    -  'downloads' - goto User Downloads folder,
+    -  'credo' - goto Credo folder,
+    -  'mymsoft' - goto mymsoft folder,
+    -  'moek' - goto MOEK folder,
+- функция 'la': аналог 'ls --color=yes -hAlF --group-directories-first' Linux
+- функция 'touch': аналог 'touch' Linux
+- функция 'search-history': Поиск в истории команд
+- функция 'refresh': Перезапустить профиль
+- функция 'sysinfo': Информация о системе
+- функция 'Show-Welcome': Приветственное сообщение
 
 ### BASH
 
