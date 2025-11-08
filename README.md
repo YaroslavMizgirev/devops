@@ -56,7 +56,7 @@ if (!(Test-Path $PROFILE)) {
 - установка alias'ов: 'which', 'open'
 - функции быстрой навигации:
     -  '..' - аналог 'cd ..',
-    -  '...' - аналог 'cd ..\..',
+    -  '...' - аналог 'cd ..\\..',
     -  '~' - аналог 'cd ~' Linux,
     -  'proj' - goto Projects folder,
     -  'proj_java' - goto Java projects folder,
