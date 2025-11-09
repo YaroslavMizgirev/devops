@@ -59,7 +59,12 @@ if (!(Test-Path $PROFILE)) {
     -  '...' - аналог 'cd ..\\..',
     -  '~' - аналог 'cd ~' Linux,
     -  'proj' - goto Projects folder,
-    -  'proj_java' - goto Java projects folder,
+    -  'projj' - goto JAVA projects folder,
+    -  'proj1c' - goto 1C projects folder,
+    -  'projgo' - goto GO projects folder,
+    -  'projrust' - goto RUST projects folder,
+    -  'projdocker' - goto DOCKER projects folder,
+    -  'projai' - goto AI projects folder,
     -  'docs' - goto User Documents folder,
     -  'downloads' - goto User Downloads folder,
     -  'credo' - goto Credo folder,
@@ -71,6 +76,7 @@ if (!(Test-Path $PROFILE)) {
 - функция 'refresh': Перезапустить профиль
 - функция 'sysinfo': Информация о системе
 - функция 'Show-Welcome': Приветственное сообщение
+- функция 'start_ssh': Проверка работы ssh-agent; удаление всех ключей; добавление ключей - github и gitlab
 
 ### BASH
 
