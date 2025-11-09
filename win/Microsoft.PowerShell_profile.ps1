@@ -285,7 +285,12 @@ function search-history {
 
 # Быстрый переход к часто используемым папкам
 function proj { Set-Location "C:\Projects" }
-function proj_java { Set-Location "C:\Projects\java" }
+function projj { Set-Location "C:\Projects\java" }
+function proj1c { Set-Location "C:\Projects\1c" }
+function projgo { Set-Location "C:\Projects\go" }
+function projrust { Set-Location "C:\Projects\rust" }
+function projdocker { Set-Location "C:\Projects\docker" }
+function projai { Set-Location "C:\Projects\ai" }
 function docs { Set-Location "C:\Users\$env:USERNAME\Documents" }
 function downloads { Set-Location "C:\Users\$env:USERNAME\Downloads" }
 function credo { Set-Location "C:\Users\$env:USERNAME\Downloads\Credo" }
@@ -319,7 +324,12 @@ function Show-Welcome {
     Write-Host "Profile loaded from: $PROFILE" -ForegroundColor Gray
     Write-Host "------------------------" -ForegroundColor Gray
     Write-Host "Type 'proj' for Projects" -ForegroundColor Gray
-    Write-Host "Type 'proj_java' for Java projects" -ForegroundColor Gray
+    Write-Host "Type 'proj1c' for 1C projects" -ForegroundColor Gray
+    Write-Host "Type 'projj' for JAVA projects" -ForegroundColor Gray
+    Write-Host "Type 'projgo' for GO projects" -ForegroundColor Gray
+    Write-Host "Type 'projrust' for RUST projects" -ForegroundColor Gray
+    Write-Host "Type 'projdocker' for DOCKER projects" -ForegroundColor Gray
+    Write-Host "Type 'projai' for AI projects" -ForegroundColor Gray
     Write-Host "Type 'docs' for Documents" -ForegroundColor Gray
     Write-Host "Type 'downloads' for Downloads" -ForegroundColor Gray
     Write-Host "Type 'credo' for Credo" -ForegroundColor Gray
@@ -331,3 +341,31 @@ function Show-Welcome {
 }
 
 Show-Welcome
+
+# Перезапуск ssh-agent и добавление ключей github, gitlab
+function start_ssh {
+    # Просто гарантируем что ssh-agent доступен
+    $agentProcess = Get-Process ssh-agent -ErrorAction SilentlyContinue
+    
+    if (!$agentProcess) {
+        Write-Host "Запускаем ssh-agent..." -ForegroundColor Yellow
+        ssh-agent | Out-Null
+    } else {
+        Write-Host "ssh-agent уже запущен (PID: $($agentProcess.Id))" -ForegroundColor Green
+    }
+
+    # Удалить все ранее добавленные ключи
+    Write-Host "Удаляем все ключи..." -ForegroundColor Yellow
+    ssh-add -D
+    Write-Host "Все ключи удалены" -ForegroundColor Green
+    # Добавить ключи
+    Write-Host "Добавляем необходимые ключи..." -ForegroundColor Yellow
+    ssh-add ~\.ssh\github\id_ed25519
+    ssh-add ~\.ssh\gitlab\id_ed25519
+    # Проверка ключей
+    Write-Host "`nДобавленные ключи:" -ForegroundColor Cyan
+    ssh-add -L
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Нет добавленных ключей или агент не доступен" -ForegroundColor Yellow
+    }
+}
