@@ -66,7 +66,8 @@ if [ "$color_prompt" = yes ]; then
     WHITE=`tput setaf 7`;
     RESET=`tput sgr0`;
     BOLD=`tput bold`;
-    PS1='\n\[${RED}\]${debian_chroot:+($debian_chroot)}\u\[${RESET}${BOLD}\] \[${RED}\]>>\[${GREEN}\]> \[${CYAN}\]\w\[${RESET}\]$(__git_ps1 " (\[${MAGENTA}\]%s\[${RESET}\])")\n\[${BOLD}\]\$\[${RESET}\] '
+    source /usr/lib/git-core/git-sh-prompt
+    PS1='\n${MAGENTA}[\D{%H:%M:%S}] \[${GREEN}\]${debian_chroot:+($debian_chroot)}\u@${RED}\h\[${RESET}${BOLD}\] \[${RED}\]>>\[${GREEN}\]> \[${CYAN}\]\w\[${RESET}\]$(__git_ps1 " (\[${MAGENTA}\]%s\[${RESET}\])")\n\[${BOLD}\]\$\[${RESET}\] '
 else
     # Modified to support git status in PS1.
     # Also modified by Mike to function better.
@@ -88,6 +89,10 @@ esac
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --group-directories-first --color=auto'
+    alias ll='ls -alF'
+    alias la='ls -A'
+    alias l='ls -CF'
+
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
 
@@ -96,20 +101,11 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
-
 # Note: PS1 is set in /etc/profile, and the default umask is defined
 # in /etc/login.defs. You should not need this unless you want different
 # defaults for root.
 # PS1='${debian_chroot:+($debian_chroot)}\h:\w\$ '
 # umask 022
-
-# You may uncomment the following lines if you want `ls' to be colorized:
-# export LS_OPTIONS='--color=auto'
-# eval "$(dircolors)"
-# alias ls='ls $LS_OPTIONS'
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
 
 # Some more alias to avoid making mistakes:
 alias rm='rm -i'
