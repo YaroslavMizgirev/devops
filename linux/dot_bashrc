@@ -67,7 +67,7 @@ if [ "$color_prompt" = yes ]; then
     RESET=`tput sgr0`;
     BOLD=`tput bold`;
     source /usr/lib/git-core/git-sh-prompt
-    PS1='\n${MAGENTA}[\D{%H:%M:%S}] \[${GREEN}\]${debian_chroot:+($debian_chroot)}\u@${RED}\h\[${RESET}${BOLD}\] \[${RED}\]>>\[${GREEN}\]> \[${CYAN}\]\w\[${RESET}\]$(__git_ps1 " (\[${MAGENTA}\]%s\[${RESET}\])")\n\[${BOLD}\]\$\[${RESET}\] '
+    PS1='\n${MAGENTA}[\D{%H:%M:%S}] \[${CYAN}\]${debian_chroot:+($debian_chroot)}\u\[${RESET}${BOLD}\] in ${GREEN}\h${RESET} \[${RED}\]>>\[${GREEN}\]> \[${CYAN}\]\w\[${RESET}\]$(__git_ps1 " (\[${MAGENTA}\]%s\[${RESET}\])")\n\[${BOLD}\]\$\[${RESET}\] '
 else
     # Modified to support git status in PS1.
     # Also modified by Mike to function better.
