@@ -81,16 +81,18 @@ if [ "$color_prompt" = yes ]; then
         tput hpa "$(( ${COLUMNS:-80} - 11 ))"
     }
 
-    # Время справа: сохранить курсор → переместить → вывести → вернуть
-    TIME_RIGHT='\[${SAVE_CURSOR}$(time_column)${WHITE}\]${PROMPT_TIME}\[${RESTORE_CURSOR}${RESET}\]'
-
     # Основное приглашение
     PS1='\n'
-    PS1+='${TIME_RIGHT}'
+
+    # Время справа
+    PS1+='\[${SAVE_CURSOR}$(time_column)${WHITE}\]'
+    PS1+="$PROMPT_TIME"
+    PS1+='\[${RESTORE_CURSOR}${RESET}\]'
+    
     PS1+='\[${CYAN}\]# \u \[${RESET}\]in \[${GREEN}\]\h  '
     PS1+='\[${CYAN}\]\w\[${RESET}\]'
     PS1+='$(__git_ps1 " (\[${MAGENTA}\]%s\[${RESET}\])")'
-    PS1+='\n\[${YELLOW}\]➜ \[${RESET}\]'
+    PS1+='\n\[${RED}\]➜ \[${RESET}\]'
 else
     # Modified to support git status in PS1.
     # Also modified by Mike to function better.
