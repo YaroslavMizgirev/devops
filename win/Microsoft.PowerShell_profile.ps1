@@ -1,371 +1,177 @@
-# Microsoft.PowerShell_profile.ps1
+# Инициализировать Oh My Posh
+oh-my-posh init pwsh --config C:\Users\mym\.poshthemes\honukai.omp.json | Invoke-Expression
 
-function Initialize-PSReadLine {
-    Write-Host "PowerShell $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-
-    # Для PowerShell 7 используем версию 2.4.4
-    if ($PSVersionTable.PSVersion -ge '7.0') {
-        $PSReadLinePath = "C:\program files\powershell\7-preview\Modules\PSReadLine\PSReadLine.psd1"
-        
-        if (Test-Path $PSReadLinePath) {
-            Get-Module PSReadLine | Remove-Module -Force -ErrorAction SilentlyContinue
-            Import-Module $PSReadLinePath -Force
-            Write-Host "PSReadLine 2.4.4 loaded successfully" -ForegroundColor Green
-            return $true
-        } else {
-            Write-Host "PSReadLine 2.4.4 not found at expected path" -ForegroundColor Yellow
-        }
-    }
-
-    # Fallback to whatever is available
-    if (Get-Module PSReadLine -ListAvailable) {
-        Import-Module PSReadLine -Force -ErrorAction SilentlyContinue
-        Write-Host "Loaded available PSReadLine version" -ForegroundColor Yellow
-        return $true
-    }
-
-    return $false
-}
-
-# Инициализируем PSReadLine
-$PSReadLineAvailable = Initialize-PSReadLine
-
-# Автоматическое перемещение в домашнюю директорию при запуске
-Set-Location $HOME
-
-# Установка кодировки
-$OutputEncoding = [System.Text.Encoding]::UTF8
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-# Настройка внешнего вида
-function Set-PowerShellTheme {
-    if ($PSReadLineAvailable) {
-        $version = (Get-Module PSReadLine).Version
-        Write-Host "Configuring PSReadLine $version" -ForegroundColor Gray
-
-        # Базовые настройки
-        Set-PSReadLineOption -PredictionSource History
-        Set-PSReadLineOption -HistorySearchCursorMovesToEnd
-        Set-PSReadLineOption -ShowToolTips
-        Set-PSReadLineOption -BellStyle None
-        Set-PSReadLineOption -EditMode Windows
-
-        # Расширенные настройки для версий 2.1.0+
-        if ($version -ge '2.1.0') {
-            try {
-                Set-PSReadLineOption -PredictionViewStyle ListView
-                Set-PSReadLineOption -Colors @{
-                    Command            = 'Yellow'
-                    Parameter          = 'Cyan'
-                    String             = 'Green'
-                    Number             = 'White'
-                    Type               = 'Gray'
-                    Variable           = 'Red'
-                    Operator           = 'DarkGray'
-                    Member             = 'Gray'
-                }
-                # Set-PSReadLineOption -SelectionBackgroundColor 'DarkBlue'
-                Write-Host "Advanced PSReadLine features enabled" -ForegroundColor Green
-            }
-            catch {
-                Write-Host "Some advanced features not available: $($_.Exception.Message)" -ForegroundColor Yellow
-            }
-        }
-    } else {
-        Write-Host "PSReadLine not available - using basic configuration" -ForegroundColor Red
-    }
-}
-
-Set-PowerShellTheme
-
-# Полезные алиасы
-Set-Alias which Get-Command
-Set-Alias open Invoke-Item
-
-# Быстрая навигация
-function .. { Set-Location .. }
-function ... { Set-Location ..\.. }
-function ~ { Set-Location $HOME }
-
-# аналог 'ls --color=yes -hAlF --group-directories-first'
-function la {
-    [CmdletBinding()]
+# === Functions ===
+function ll {
+    <#
+    .SYNOPSIS
+        Показать подробный список файлов и папок по указанному пути.
+    #>
     param(
-        [Parameter(ValueFromPipeline=$true)]
-        [string]$Path = ".",
-        [switch]$Recurse
-    )
+            [Parameter(Position = 0)]
+            [string]$Path = '.'
+        )
 
-    # Получаем все элементы, включая скрытые
-    $items = Get-ChildItem -Path $Path -Recurse:$Recurse -Force -ErrorAction SilentlyContinue
-
-    function Get-OwnerPermissions {
-        param($file)
-        if ($file.PSIsContainer) { $permissions = "d" } else { $permissions = "-" }
-        $readOnly = [bool]($file.Attributes -band [System.IO.FileAttributes]::ReadOnly)
-        $isExecutable = Test-IsExecutableFile $file
-        $permissions += if ($readOnly) { "r-" } else { "rw" }
-        $permissions += if ($isExecutable -or $file.PSIsContainer) { "x" } else { "-" }
-        return $permissions
-    }
-
-    # Это исполняемый файл
-    function Test-IsExecutableFile {
-        param($file)
-        $executableExtensions = @('.exe', '.com', '.bat', '.cmd', '.ps1', '.msi', '.scr', '.pif')
-        $byExtension = $executableExtensions -contains $file.Extension.ToLower()
-        return $byExtension
-    }
-
-    # Подсчет общего размера
-    $totalSize = ($items | Where-Object { !$_.PSIsContainer } | Measure-Object -Sum Length).Sum
-
-    # Форматирование общего размера
-    $totalSizeFormatted = switch ($totalSize) {
-        {$_ -lt 1KB} { "{0}B" -f $_ }
-        {$_ -lt 1MB} { "{0:N2}KB" -f ($_ / 1KB) }
-        {$_ -lt 1GB} { "{0:N2}MB" -f ($_ / 1MB) }
-        default { "{0:N2}GB" -f ($_ / 1GB) }
-    }
-
-    # Выводим общую информацию
-    Write-Host "Total $totalSizeFormatted"
-
-    # Собираем данные для всех элементов
-    $tableData = @()
-
-    # Разделяем директории и файлы
-    $directories = $items | Where-Object { $_.PSIsContainer } | Sort-Object Name
-    $files = $items | Where-Object { !$_.PSIsContainer } | Sort-Object Name
-
-    # ИСПРАВЛЕНИЕ: Объединяем директории и файлы правильно
-    $allItems = @($directories) + @($files)
-
-    # Форматируем вывод
-    foreach ($item in $allItems) {
-        $name = $item.Name
-        $permissions = Get-OwnerPermissions $item
-        $size = if ($item.PSIsContainer) { "0" }
-            elseif ($item.Length -gt 0) {
-                if ($item.Length -lt 1KB) { "$($item.Length)B" }
-                elseif ($item.Length -lt 1MB) { "{0:N2}KB" -f ($item.Length / 1KB) }
-                elseif ($item.Length -lt 1GB) { "{0:N2}MB" -f ($item.Length / 1MB) }
-                else { "{0:N2}GB" -f ($item.Length / 1GB) }
-            } else { "0" }
-
-        # Получаем информацию о владельце
-        try {
-            $acl = Get-Acl -Path $item.FullName
-            $owner = $acl.Owner
-            $ownerUser = "$($owner.Split('\')[1])"
-            $ownerGroup = "$($owner.Split('\')[0])"
-        } catch {
-            $ownerUser = "N/A"
-            $ownerGroup = "N/A"
-        }
-
-        # Получаем время последнего изменения
-        $lastModified = $item.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
-
-        # ИСПРАВЛЕНИЕ: Используем правильную переменную
-        if ($item.PSIsContainer) { 
-            $displayName = $name + "/" 
-        }
-        elseif ([bool]($item.Attributes -band [System.IO.FileAttributes]::Hidden)) { 
-            $displayName = "." + $name 
-        }
-        else { 
-            $displayName = $name 
-        }
-
-        $tableData += [PSCustomObject]@{
-            Permissions = $permissions
-            OwnerUser = $ownerUser
-            OwnerGroup = $ownerGroup
-            Size = $size
-            LastModified = $lastModified
-            Name = $displayName
-            IsDirectory = $item.PSIsContainer
-            IsExecutable = Test-IsExecutableFile $item
-            RawName = $name
-        }
-    }
-
-    # Определяем максимальные ширины колонок
-    $maxPermissions = ($tableData.Permissions | Measure-Object -Property Length -Maximum).Maximum
-    $maxOwnerUser = ($tableData.OwnerUser | Measure-Object -Property Length -Maximum).Maximum
-    $maxOwnerGroup = ($tableData.OwnerGroup | Measure-Object -Property Length -Maximum).Maximum
-    $maxSize = ($tableData.Size | Measure-Object -Property Length -Maximum).Maximum
-    $maxLastModified = ($tableData.LastModified | Measure-Object -Property Length -Maximum).Maximum
-
-    # Выводим данные с выравниванием
-    foreach ($row in $tableData) {
-        # Права доступа
-        Write-Host $row.Permissions.PadRight($maxPermissions) -ForegroundColor DarkGray -NoNewline
-        Write-Host " " -NoNewline
-
-        # Владелец Пользователь
-        Write-Host $row.OwnerUser.PadRight($maxOwnerUser) -NoNewline
-        Write-Host " " -NoNewline
-
-        # Владелец Группа
-        Write-Host $row.OwnerGroup.PadRight($maxOwnerGroup) -NoNewline
-        Write-Host " " -NoNewline
-
-        # Размер
-        Write-Host $row.Size.PadLeft($maxSize) -NoNewline
-        Write-Host " " -NoNewline
-
-        # Дата изменения
-        Write-Host $row.LastModified.PadRight($maxLastModified) -NoNewline
-        Write-Host " " -NoNewline
-
-        # Имя файла/папки с цветами
-        if ($row.IsDirectory) { Write-Host $row.Name -ForegroundColor Cyan }
-        elseif ($row.IsExecutable) { Write-Host $row.Name -ForegroundColor Green }
-        else { Write-Host $row.Name }
-    }
+        Get-ChildItem -LiteralPath $Path -Force |
+            Format-Table Mode, LastWriteTime, Length, Name, Attributes -AutoSize
 }
-# аналог touch
+
+function grep {
+    <#
+    .SYNOPSIS
+        Поиск текста в файлах.
+    #>
+   Select-String
+}
+
 function touch {
     <#
     .SYNOPSIS
-        Unix-like touch command for PowerShell
-    
-    .DESCRIPTION
-        Enhances New-Item by providing touch-like behavior:
-        - Creates file if it doesn't exist
-        - Updates timestamp if it exists
-        - Better pipeline support and syntax
-    
-    .PARAMETER Path
-        File path(s) to create or update
-    
-    .EXAMPLE
+        # Создать файл или обновить время
         touch file.txt
-        touch *.log, *.tmp
-        Get-ChildItem *.cs | touch
+
+        # Несколько файлов сразу
+        touch file1.txt, file2.txt, file3.txt
+
+        # Указать конкретную дату (аналог touch -d)
+        touch log.txt -Date "2023-12-01 10:30:00"
+
+        # Только обновить время у существующего файла, не создавать (аналог touch -c)
+        touch old.txt -NoCreate
+
+        # Обновить только время доступия (аналог touch -a)
+        touch file.txt -AccessTimeOnly
+
+        # Обновить только время модификации (аналог touch -m)
+        touch file.txt -ModifyTimeOnly
+
+        # Работает с масками (для существующих файлов)
+        touch *.log
     #>
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
-        [Alias("FullName")]
-        [string[]]$Path
+        [Alias('FullName')]
+        [string[]]$Path,
+
+        [Alias('d')]
+        [datetime]$Date = (Get-Date),
+
+        [Alias('c')]
+        [switch]$NoCreate,
+
+        [Alias('a')]
+        [switch]$AccessTimeOnly,
+
+        [Alias('m')]
+        [switch]$ModifyTimeOnly
     )
-    
+
     process {
-        foreach ($filePath in $Path) {
-            try {
-                if (Test-Path $filePath) {
-                    # Файл существует - обновляем timestamp
-                    if ($PSCmdlet.ShouldProcess($filePath, "Update timestamp")) {
-                        (Get-Item $filePath).LastWriteTime = Get-Date
-                        Write-Verbose "Updated: $filePath"
-                    }
-                } else {
-                    # Файл не существует - создаем через New-Item
-                    if ($PSCmdlet.ShouldProcess($filePath, "Create file")) {
-                        $null = New-Item -Path $filePath -ItemType File -Force
-                        Write-Verbose "Created: $filePath"
-                    }
+        foreach ($file in $Path) {
+            # Разрешаем wildcards (*.txt и т.д.)
+            if ($file -match '[\*\?]') {
+                $resolvedItems = Resolve-Path -Path $file -ErrorAction SilentlyContinue
+                if (-not $resolvedItems) {
+                    Write-Warning "touch: cannot access '$file': No such file or directory"
+                    continue
+                }
+                $targetPaths = $resolvedItems | Select-Object -ExpandProperty ProviderPath
+            }
+            else {
+                try {
+                    $targetPaths = @($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($file))
+                }
+                catch {
+                    Write-Warning "touch: invalid path: $file"
+                    continue
                 }
             }
-            catch {
-                Write-Error "Error processing '$filePath': $($_.Exception.Message)"
+
+            foreach ($target in $targetPaths) {
+                $exists = Test-Path -LiteralPath $target
+
+                if (-not $exists) {
+                    if ($NoCreate) { continue }
+
+                    $parent = Split-Path -Parent -Path $target
+                    if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+                        Write-Error "touch: cannot touch '$file': No such file or directory"
+                        continue
+                    }
+
+                    try {
+                        $null = New-Item -ItemType File -Path $target -ErrorAction Stop
+                        $exists = $true
+                    }
+                    catch {
+                        Write-Error "touch: cannot create '$file': $_"
+                        continue
+                    }
+                }
+
+                if ($exists) {
+                    try {
+                        $item = Get-Item -LiteralPath $target
+
+                        # По умолчанию обновляем обе метки
+                        if (-not $AccessTimeOnly) {
+                            $item.LastWriteTime = $Date
+                        }
+                        if (-not $ModifyTimeOnly) {
+                            $item.LastAccessTime = $Date
+                        }
+                    }
+                    catch {
+                        Write-Error "touch: setting times for '$file': $_"
+                    }
+                }
             }
         }
     }
 }
 
-# Поиск в истории команд
-function search-history {
-    $history = Get-Content (Get-PSReadLineOption).HistorySavePath
-    $history | Where-Object { $_ -like "*$args*" } | Select-Object -Last 20
-}
+function Use-Java {
+    param(
+        [ValidateSet('8', '25')]
+        [string]$Version
+    )
 
-# Быстрый переход к часто используемым папкам
-function proj { Set-Location "C:\Projects" }
-function projj { Set-Location "C:\Projects\java" }
-function proj1c { Set-Location "C:\Projects\1c" }
-function projgo { Set-Location "C:\Projects\go" }
-function projrust { Set-Location "C:\Projects\rust" }
-function projdocker { Set-Location "C:\Projects\docker" }
-function projai { Set-Location "C:\Projects\ai" }
-function docs { Set-Location "C:\Users\$env:USERNAME\Documents" }
-function downloads { Set-Location "C:\Users\$env:USERNAME\Downloads" }
-function credo { Set-Location "C:\Users\$env:USERNAME\Downloads\Credo" }
-function mymsoft { Set-Location "C:\Users\$env:USERNAME\Downloads\mymsoft" }
-function moek { Set-Location "C:\Users\$env:USERNAME\Downloads\moek" }
-
-# Перезапустить профиль
-function refresh {
-    try {
-        . $PROFILE
-        Write-Host "Профиль успешно перезагружен" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Ошибка при загрузке профиля: $_" -ForegroundColor Red
-    }
-}
-
-# Информация о системе
-function sysinfo {
-    Write-Host "=== System Information ===" -ForegroundColor Cyan
-    Write-Host "User: $env:USERNAME" -ForegroundColor Yellow
-    Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor Yellow
-    Write-Host "PowerShell: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
-    Write-Host "OS: $([System.Environment]::OSVersion.VersionString)" -ForegroundColor Yellow
-    Write-Host "==========================" -ForegroundColor Cyan
-}
-
-# Приветственное сообщение
-function Show-Welcome {
-    Write-Host "=== PowerShell $($PSVersionTable.PSVersion) ===" -ForegroundColor Green
-    Write-Host "Profile loaded from: $PROFILE" -ForegroundColor Gray
-    Write-Host "------------------------" -ForegroundColor Gray
-    Write-Host "Type 'proj' for Projects" -ForegroundColor Gray
-    Write-Host "Type 'proj1c' for 1C projects" -ForegroundColor Gray
-    Write-Host "Type 'projj' for JAVA projects" -ForegroundColor Gray
-    Write-Host "Type 'projgo' for GO projects" -ForegroundColor Gray
-    Write-Host "Type 'projrust' for RUST projects" -ForegroundColor Gray
-    Write-Host "Type 'projdocker' for DOCKER projects" -ForegroundColor Gray
-    Write-Host "Type 'projai' for AI projects" -ForegroundColor Gray
-    Write-Host "Type 'docs' for Documents" -ForegroundColor Gray
-    Write-Host "Type 'downloads' for Downloads" -ForegroundColor Gray
-    Write-Host "Type 'credo' for Credo" -ForegroundColor Gray
-    Write-Host "Type 'moek' for MOEK" -ForegroundColor Gray
-    Write-Host "Type 'mymsoft' for mymsoft" -ForegroundColor Gray
-    Write-Host "------------------------" -ForegroundColor Gray
-    Write-Host "Type 'sysinfo' for system information" -ForegroundColor Gray
-    Write-Host "Type 'Get-Help about_Profiles' for help" -ForegroundColor Gray
-}
-
-Show-Welcome
-
-# Перезапуск ssh-agent и добавление ключей github, gitlab
-function start_ssh {
-    # Просто гарантируем что ssh-agent доступен
-    $agentProcess = Get-Process ssh-agent -ErrorAction SilentlyContinue
-    
-    if (!$agentProcess) {
-        Write-Host "Запускаем ssh-agent..." -ForegroundColor Yellow
-        ssh-agent | Out-Null
-    } else {
-        Write-Host "ssh-agent уже запущен (PID: $($agentProcess.Id))" -ForegroundColor Green
+    $env:JAVA_HOME = switch ($Version) {
+        '8'  { 'C:\Program Files\Zulu\zulu-8' }
+        '25' { 'C:\Program Files\Zulu\zulu-25' }
     }
 
-    # Удалить все ранее добавленные ключи
-    Write-Host "Удаляем все ключи..." -ForegroundColor Yellow
-    ssh-add -D
-    Write-Host "Все ключи удалены" -ForegroundColor Green
-    # Добавить ключи
-    Write-Host "Добавляем необходимые ключи..." -ForegroundColor Yellow
-    ssh-add ~\.ssh\github\id_ed25519
-    ssh-add ~\.ssh\gitlab\id_ed25519
-    # Проверка ключей
-    Write-Host "`nДобавленные ключи:" -ForegroundColor Cyan
-    ssh-add -L
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Нет добавленных ключей или агент не доступен" -ForegroundColor Yellow
-    }
+    $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+    java -version
+}
+
+# Включаем сохранение истории
+Set-PSReadLineOption -HistorySaveStyle SaveAtExit
+# Устанавливаем максимальное количество сохраняемых команд
+Set-PSReadLineOption -MaximumHistoryCount 10000
+# Включаем подсказки из истории при вводе (похоже на zsh/fish)
+Set-PSReadLineOption -PredictionSource History
+# Показывать список вариантов
+Set-PSReadLineOption -PredictionViewStyle ListView
+# Включаем цветное автодополнение
+Set-PSReadLineOption -Colors @{ InlinePrediction = '#808080' }
+# Настройка горячих клавиш для вызова меню
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+# Устанавливаем кодировку по умолчанию на UTF-8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+
+# Чтобы алиас "Invoke-WebRequest" не возвращался при каждом запуске
+Remove-Item Alias:curl -ErrorAction SilentlyContinue
+# Import the Chocolatey Profile that contains the necessary code to enable
+# tab-completions to function for `choco`.
+# Be aware that if you are missing these lines from your profile, tab completion
+# for `choco` will not function.
+# See https://ch0.co/tab-completion for details.
+$ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+if (Test-Path($ChocolateyProfile)) {
+  Import-Module "$ChocolateyProfile"
 }
