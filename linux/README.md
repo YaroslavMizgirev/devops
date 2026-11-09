@@ -31,3 +31,18 @@ chronyc tracking
 ```bash
 timedatectl set-timezone Africa/Nairobi
 ```
+
+## New user
+
+```bash
+adduser newuser
+
+usermod -aG sudo newuser
+
+mkdir -p /home/newuser/.ssh
+vi /home/newuser/.ssh/authorized_keys
+
+chmod 700 /home/newuser/.ssh
+chmod 600 /home/newuser/.ssh/authorized_keys
+chown -R newuser:newuser /home/newuser/.ssh
+```
