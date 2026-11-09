@@ -1,6 +1,8 @@
 # Install additional utility
 
-## git
+## AFTER .BASHRC
+
+### Git
 
 Если после запуска у вас `__git_ps1: command not found`:
 
@@ -10,7 +12,7 @@ apt install git
 source ~/.bashrc
 ```
 
-## time / timezone
+### Time
 
 Если после запуска время неправильное: 
 
@@ -20,7 +22,12 @@ apt install chrony
 systemctl enable --now chrony
 chronyc tracking
 # Информационно: В утилите chrony (как и в любом другом NTP-клиенте или сервере) нет понятия часового пояса.
+```
 
-# При необходимости установите свою временную зону:
+### Timezone
+
+Если после запуска неправильный часовой пояс: 
+
+```bash
 timedatectl set-timezone Africa/Nairobi
 ```
