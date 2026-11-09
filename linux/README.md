@@ -46,3 +46,38 @@ chmod 700 /home/newuser/.ssh
 chmod 600 /home/newuser/.ssh/authorized_keys
 chown -R newuser:newuser /home/newuser/.ssh
 ```
+
+## SSH Port
+
+```bash
+systemctl edit ssh.socket
+```
+
+```ini
+[Socket]
+ListenStream=
+ListenStream=0.0.0.0:2222
+ListenStream=[::]:2222
+```
+
+```bash
+systemctl daemon-reload
+systemctl restart ssh.socket
+
+systemctl status ssh.socket
+sudo ss -tlnp | grep :2222
+```
+
+## UFW
+
+```bash
+apt update
+apt install ufw
+
+#ufw default deny incoming
+#ufw default allow outgoing
+ufw allow 2222/tcp
+
+ufw enable
+ufw status verbose
+```
