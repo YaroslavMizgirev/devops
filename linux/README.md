@@ -81,3 +81,26 @@ ufw allow 2222/tcp
 ufw enable
 ufw status verbose
 ```
+
+## FILE2BAN
+
+```bash
+apt update
+apt install fail2ban
+
+vi /etc/fail2ban/jail.local
+```
+
+```ini
+[sshd]
+enabled = true
+port = 2587
+# Если ваша система использует systemd для управления логами (по умолчанию в новых версиях Ubuntu),
+# может потребоваться следующая строка, чтобы указать Fail2ban читать журнал systemd, а не файл
+backend = systemd
+```
+
+```bash
+systemctl restart fail2ban
+fail2ban-client status sshd
+```
